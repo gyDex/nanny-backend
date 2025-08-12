@@ -680,11 +680,11 @@ export class UsersService {
             console.error('Update nanny error:', error);
 
             if (error.code === '23505') {
-            throw new ConflictException('Email already exists');
+                throw new ConflictException('Email already exists');
             }
 
             if (error.code === '42P01') {
-            throw new InternalServerErrorException('Database configuration error');
+                throw new InternalServerErrorException('Database configuration error');
             }
 
             throw new InternalServerErrorException('An unexpected error occurred');

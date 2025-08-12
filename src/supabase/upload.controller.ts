@@ -10,6 +10,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { SupabaseService } from './supabase.service';
 import { encryptBuffer } from 'utils/encrypt';
 import { JwtAuthGuard } from 'src/auth/strategies/guards/jwt-auth.guard';
+import { slugify } from 'transliteration';
 
 @Controller('upload')
 export class UploadController {
@@ -23,14 +24,13 @@ export class UploadController {
         throw new BadRequestException('File is required');
         }
 
-        // Шифруем
+        const originalName = slugify(file.originalname, { lowercase: false }) as any;
+
         const { encrypted, iv } = encryptBuffer(file.buffer);
 
-        // В начало файла добавляем IV (16 байт)
         const encryptedWithIv = Buffer.concat([iv, encrypted]);
 
-        // Формируем путь в хранилище
-        const path = `encrypted/${Date.now()}_${file.originalname}.enc`;
+        const path = `encrypted/${Date.now()}_${originalName}.enc`;
 
         await this.supabaseService.uploadFile(path, encryptedWithIv, 'application/octet-stream');
 

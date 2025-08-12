@@ -1,5 +1,6 @@
 import * as crypto from 'crypto';
 
+
 const algorithm = 'aes-256-cbc';
 const key = Buffer.from(process.env.ENCRYPTION_KEY!, 'hex');
 
