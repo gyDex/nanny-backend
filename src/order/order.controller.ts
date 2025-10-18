@@ -17,7 +17,7 @@ export class OrdersController {
     try
     {
       const userId = req.user.id; 
-      const order = await this.ordersService.create(body.userId, body.amount);
+      const order = await this.ordersService.create(body.userId, body);
 
       console.log('order', order)
   

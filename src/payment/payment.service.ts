@@ -20,10 +20,13 @@ export class PaymentService {
       }
     })
 
+    console.log(orderId)
+
     const params = new URLSearchParams({
       do: 'pay',
       order_id: orderId,
-      customer_phone: user?.phone as string, // сюда можно вставить телефон, если есть
+      customer_phone: user?.phone as string,
+      'products[0][order_id]': orderId,
       'products[0][name]': 'Подписка',
       'products[0][price]': amount,
       'products[0][quantity]': '1',

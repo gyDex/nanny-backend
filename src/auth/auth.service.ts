@@ -140,26 +140,21 @@ export class AuthService {
 
             res.cookie('Authentication', accessToken, {
                 httpOnly: true,
-                secure: true,
-                // secure: this.configService.get('NODE_ENV') === 'production',
+                secure: process.env.NODE_ENV === 'production',
                 expires: expiresAccessToken,
-                path: '/', 
-                sameSite: 'none',
-                domain: 'localhost',
+                path: '/',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                domain: process.env.NODE_ENV === 'production' ? 'servicenanny.ru' : 'localhost',
             });
-
-            console.log('Setting Authentication cookie:', accessToken);
-            console.log(res.cookie);
 
             res.cookie('Refresh', refreshToken, {
                 httpOnly: true,
-                // secure: this.configService.get('NODE_ENV') === 'production',
-                secure: true,
+                secure: process.env.NODE_ENV === 'production',
                 expires: expiresRefreshToken,
-                path: '/', 
-                sameSite: 'none',
-                domain: 'localhost',
-            })
+                path: '/',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                domain: process.env.NODE_ENV === 'production' ? 'servicenanny.ru' : 'localhost',
+            });
 
             return res.json(userData);
         } catch (error) {

@@ -1,10 +1,8 @@
 import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { User } from '@prisma/client';
-import { JwtAuthGuard } from './strategies/guards/jwt-auth.guard';
+import { User, UserRole } from '@prisma/client';
 import { Response } from 'express';
-import { UserRole } from 'generated/prisma';
 import { JwtRefreshAuthGuard } from './strategies/guards/jwt-refresh-auth.guard';
 
 @Controller('auth')

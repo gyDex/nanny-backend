@@ -21,7 +21,8 @@ export class PaymentController {
   @UseGuards(JwtAuthGuard)
   async createPayment(@Req() req: any, @Body() body: { orderId: string; amount: string }) {
     const userId = req.user.id; 
-    const order = await this.ordersService.create(userId, body.amount);
+
+    const order = await this.ordersService.create(userId, body);
    
     return await this.produmusService.generatePaymentData(userId, order.id, body.amount);
   }

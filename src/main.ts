@@ -1,6 +1,10 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { LogLevel } from '@nestjs/common';
+
 const cookieParser = require('cookie-parser');
 
 async function bootstrap() {
@@ -9,13 +13,15 @@ async function bootstrap() {
   });
 
   app.use(cookieParser());
+  
   app.enableCors({
-    origin: true,
+    origin: ['https://servicenanny.ru'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
 
   app.enableShutdownHooks();
-  await app.listen(process.env.PORT ?? 3001);
+
+  await app.listen(process.env.PORT ?? 4000);
 }
 bootstrap();

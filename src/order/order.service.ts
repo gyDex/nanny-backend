@@ -7,11 +7,12 @@ import { PrismaService } from 'prisma/prisma.service';
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
-  async create(userId: string, amount: string) {
+  async create(userId: string, body: any) {
     return this.prisma.order.create({
       data: {
+        id:body.orderId,
         userId,
-        amount,
+        amount:body.amount,
       },
     });
   }
