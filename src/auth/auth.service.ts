@@ -7,6 +7,7 @@ import { compare, hash } from 'bcryptjs';
 import { SmsService } from 'src/sms/sms.service';
 import { Response } from 'express';
 import { User, UserRole } from '@prisma/client';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -15,14 +16,56 @@ export class AuthService {
         private readonly configService: ConfigService,
         private readonly usersService: UsersService,
         private readonly jwtService: JwtService,
-        private readonly smsService: SmsService,
+        private readonly mailService: MailService,
     ) {}
 
     generateCode(): string {
         return Math.floor(100000 + Math.random() * 900000).toString();
     }
 
-    async requestCode(phone: string, role: string) {
+    async logout(userId: string, response: Response) {
+        try {
+            await this.usersService.updateUser(userId, {
+                refreshToken: null
+            })
+
+            const expirationMs = parseInt(
+                this.configService.getOrThrow('JWT_ACCESS_TOKEN_EXPIRATION_MS'),
+            );
+            const refreshExpirationMs = parseInt(
+                this.configService.getOrThrow('JWT_REFRESH_TOKEN_EXPIRATION_MS'),
+            );
+            const expiresAccessToken = new Date(Date.now() + expirationMs);
+            const expiresRefreshToken = new Date(Date.now() + refreshExpirationMs);
+
+            response.clearCookie('Authentication', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                expires: expiresRefreshToken,
+                path: '/',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                domain: process.env.NODE_ENV === 'production' ? 'servicenanny.ru' : 'localhost',
+            })
+            response.clearCookie('Refresh', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                expires: expiresRefreshToken,
+                path: '/',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                domain: process.env.NODE_ENV === 'production' ? 'servicenanny.ru' : 'localhost',
+            })
+
+            response.status(200).json({
+                message: 'Successfully signed out',
+            })  
+        } catch (error) {
+            console.log(error)
+
+            throw new UnauthorizedException('Failed to process sign out');
+        }
+    }
+
+    async requestCode(email: string, role: string) {
         let roles;
 
         if (role === 'PARENT') {
@@ -32,14 +75,14 @@ export class AuthService {
             roles = UserRole.NANNY;
         }
 
-        let user = await this.prisma.user.findUnique({
-            where: { phone },
+        let user = await this.prisma.user.findFirst({
+            where: { email: email },
         });
 
         if (!user) {
                 user = await this.prisma.user.create({
                 data: {
-                    phone,
+                    email,
                     roles: [roles],
                     ...(role === 'PARENT'
                     ? {
@@ -65,7 +108,7 @@ export class AuthService {
         } else if (!user.roles.includes(roles)) {
                 // Если пользователь существует, но роли нет — добавляем роль
                 user = await this.prisma.user.update({
-                where: { phone },
+                where: { email },
                 data: {
                     roles: roles
                 },
@@ -85,8 +128,10 @@ export class AuthService {
 
         // await this.smsService.send(phone, `Ваш код: ${code}`);
 
-        // return { message: `Код отправлен успешно` };
-        return { message: `Ваш код: ${code}` };
+        await this.mailService.sendMail(email, `Авторизация на сайт`, `<h1>Ваш код: ${code}</h1>`)
+
+        return { message: `Код отправлен успешно` };
+        // return { message: `Ваш код: ${code}` };
     }
 
     async login(user: User, res: Response, redirect:boolean = false) {
@@ -181,8 +226,8 @@ export class AuthService {
         }    
     }
 
-    async verifyCode(phone: string, code: string) {
-        const user = await this.prisma.user.findUnique({ where: { phone } });
+    async verifyCode(email: string, code: string) {
+        const user = await this.prisma.user.findUnique({ where: { email } });
         if (!user) throw new NotFoundException('Пользователь не найден');
 
         const otp = await this.prisma.oTPCode.findFirst({

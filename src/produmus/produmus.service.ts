@@ -101,10 +101,12 @@ export class ProdumusService {
       const parent = await this.prisma.parentProfile.findFirst({
         where: {
           user: {
-            phone: body.customer_phone.replace('+',''),
+            email: body.customer_email,
           }
         }
       });
+
+      console.log(parent)
 
       if (!parent) {
         throw new BadRequestException('Parent not found');
@@ -113,7 +115,7 @@ export class ProdumusService {
       await this.usersServices.subscribeParent(parent.userId);
 
       await this.prisma.user.update({
-        where: { phone: body.customer_phone.replace('+','') },
+        where: { email: body.customer_email },
         data: { 
           parentProfile:{
           update: {

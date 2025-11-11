@@ -1,7 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import { ApplicationsService } from './applications.service';
-import { HttpService } from '@nestjs/axios';
-import { JwtAuthGuard } from 'src/auth/strategies/guards/jwt-auth.guard';
 
 @Controller('applications')
 export class ApplicationsController {

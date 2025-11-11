@@ -58,10 +58,25 @@ export class ApplicationsService {
                 education: true,
                 educationFile: true,
                 isValidated: true,
+                about: true,
+                jobs: true,
+                pay: true,
+                question: true,
+                experience: true,
+                agesBaby: true,
+                typePay: true,
+                advantages: true,
+                occupancy: true,
+                charts: true,
+                duties: true,
                 user: {
                     select: {
                         fullName: true,
                         email: true,
+                        age: true,
+                        phone: true,
+                        userAvatar: true,
+                        residency: true,                         
                     }  
                 }
             },

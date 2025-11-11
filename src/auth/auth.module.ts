@@ -11,6 +11,7 @@ import { PassportModule } from '@nestjs/passport';
 import { PrismaModule } from 'prisma/prisma.module';
 import { SmsModule } from 'src/sms/sms.module';
 import { HttpModule } from '@nestjs/axios';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { HttpModule } from '@nestjs/axios';
     UsersModule,
     PrismaModule,
     SmsModule,
+    MailModule,
     HttpModule,
     ConfigModule, // можно убрать, если глобальный
     JwtModule.registerAsync({

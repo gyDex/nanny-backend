@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
@@ -12,6 +12,9 @@ import { FileController } from './supabase/file.controller';
 import { PaymentController } from './payment/payment.controller';
 import { PaymentModule } from './payment/payment.module';
 import { PaymentService } from './payment/payment.service';
+import { ApplicationsController } from './application/applications.controller';
+import { ApplicationsService } from './application/applications.service';
+import { HttpModule, HttpService } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -19,14 +22,15 @@ import { PaymentService } from './payment/payment.service';
       isGlobal: true,
     }),
     PrismaModule,
+    HttpModule,
     UsersModule,
     AuthModule,
     ProdumusModule,
     OrdersModule,
     PaymentModule,
   ],
-  controllers: [AudioController, UploadController, FileController, PaymentController],
-  providers: [SupabaseService, PaymentService], 
+  controllers: [AudioController, UploadController, FileController, PaymentController, ApplicationsController],
+  providers: [SupabaseService, PaymentService, ApplicationsService], 
 })
 
 export class AppModule  {

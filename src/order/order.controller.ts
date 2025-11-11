@@ -16,7 +16,6 @@ export class OrdersController {
   async createOrder(@Req() req: any, @Body() body: { userId: string; amount: string }) {
     try
     {
-      const userId = req.user.id; 
       const order = await this.ordersService.create(body.userId, body);
 
       console.log('order', order)

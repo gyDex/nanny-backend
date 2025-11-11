@@ -5,8 +5,8 @@ import { ProdumusModule } from "src/produmus/produmus.module";
 
 @Module({
   controllers: [OrdersController],
-  providers: [OrdersService], // только сервисы здесь
-  imports: [ProdumusModule],  // модули импортируются тут
+  providers: [OrdersService],
+  imports: [ProdumusModule],  
   exports: [OrdersService],
 })
 export class OrdersModule {}
