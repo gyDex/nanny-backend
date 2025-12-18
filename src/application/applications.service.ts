@@ -96,8 +96,6 @@ export class ApplicationsService {
             })
     
             if (status === 'approved') {
-                console.log('approved')
-                console.log(nanny?.user?.fullName)
                 let res = this.httpService.post('https://servicenanny.ru/server/send-success', {
                     email: nanny?.user?.email,
                     name: nanny?.user?.fullName,
@@ -110,8 +108,6 @@ export class ApplicationsService {
                     })
                 })
                 const response = await lastValueFrom(res)
-
-                console.log(response)
             }
     
             return this.prisma.nannyProfile.update({

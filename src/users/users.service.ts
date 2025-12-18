@@ -1,9 +1,10 @@
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "prisma/prisma.service";
 
 import { UpdateUserDto } from "./update-user.dto/update-user-dto";
 import { ConfigService } from "@nestjs/config";
 import { JSDOM } from 'jsdom';
+import { Prisma } from "@prisma/client";
 
 const createDOMPurify = require('dompurify');
 
@@ -178,48 +179,32 @@ export class UsersService {
     }
 
     async getNannyByCity(city: string) {
-        try {
-            console.log('city sik')
-            console.log('city',city)
-
-            console.log(this.prisma.nannyProfile.findMany())
-            
+        try {          
             let nanny = await this.prisma.nannyProfile.findMany({
                 where: {
                     user: {
-                        residency: city
+                        residency: {
+                            contains: city.trim()
+                        }
                     }
                 },
                 include: {
                     response: true,
                     user: true,
                 }
-            })
+            });
 
-            console.log('nanny',nanny)
-
-            if (city === 'Москва') {
-                nanny = await this.prisma.nannyProfile.findMany({
-                    where: {
-                        user: {
-                            residency: city
-                        }
-                    },
-                    include: {
-                        response: true,
-                        user: true,
-                    }
-                })
-            }
+            console.log(nanny)
+            console.log(city)
 
             if (nanny.length === 0) {
-            throw new NotFoundException('Nanny not found!');
+                throw new NotFoundException('Nanny not found!');
             }
-            console.log('NANNY', nanny)
 
             return nanny;
 
         } catch (error) {
+            console.log(error)
 
             if (error.code === '42P01') {
                 throw new InternalServerErrorException('Database configuration error');
@@ -645,54 +630,117 @@ export class UsersService {
         }
     }
 
-    async updateNanny(id: string, data: any) {
-        try {
-            console.log(data)
-            if (data.nanny?.jobs) {
-                data.nanny.jobs = DOMPurify.sanitize(data.nanny.jobs);
-            }
+async updateNanny(id: string, data: any) {
+    try {
+        console.log('Received data for update:', JSON.stringify(data, null, 2));
 
-            if (data.nanny?.education) {
-                data.nanny.education = DOMPurify.sanitize(data.nanny.education);
-            }
+        // Санитизация данных
+        const sanitizedData = {
+            user: { ...data.user },
+            nanny: { ...data.nanny }
+        };
 
-            if (data.nanny?.about) {
-                data.nanny.about = DOMPurify.sanitize(data.nanny.about);
-            }
-
-            const updatedUser = await this.prisma.user.update({
-                where: {
-                    id: id,
-                },
-                data: {
-                    ...data.user,
-                    nannyProfile: {
-                    upsert: {
-                        update: {...data.nanny},
-                        create: {...data.nanny}
-                    },
-                    },
-                },
-                include: {
-                    nannyProfile: true,
-                },
-            });
-
-            return updatedUser;
-        } catch (error) {
-            console.error('Update nanny error:', error);
-
-            if (error.code === '23505') {
-                throw new ConflictException('Email already exists');
-            }
-
-            if (error.code === '42P01') {
-                throw new InternalServerErrorException('Database configuration error');
-            }
-
-            throw new InternalServerErrorException('An unexpected error occurred');
+        if (sanitizedData.nanny?.jobs) {
+            sanitizedData.nanny.jobs = DOMPurify.sanitize(sanitizedData.nanny.jobs);
         }
+        if (sanitizedData.nanny?.education) {
+            sanitizedData.nanny.education = DOMPurify.sanitize(sanitizedData.nanny.education);
+        }
+        if (sanitizedData.nanny?.about) {
+            sanitizedData.nanny.about = DOMPurify.sanitize(sanitizedData.nanny.about);
+        }
+
+        // Валидация и преобразование типов
+        const updateData: any = {};
+
+        // Обработка данных пользователя
+        if (sanitizedData.user) {
+            updateData.phone = sanitizedData.user.phone || undefined;
+            updateData.fullName = sanitizedData.user.fullName || undefined;
+            updateData.age = sanitizedData.user.age || undefined;
+            updateData.residency = sanitizedData.user.residency || undefined;
+            updateData.userAvatar = sanitizedData.user.userAvatar || undefined;
+            updateData.isVisible = sanitizedData.user.isVisible !== undefined ? sanitizedData.user.isVisible : undefined;
+        }
+
+        // Обработка данных няни
+        if (sanitizedData.nanny) {
+            updateData.nannyProfile = {
+                upsert: {
+                    update: {
+                        about: sanitizedData.nanny.about || undefined,
+                        education: sanitizedData.nanny.education || undefined,
+                        jobs: sanitizedData.nanny.jobs || undefined,
+                        typePay: sanitizedData.nanny.typePay || undefined,
+                        pay: sanitizedData.nanny.pay || undefined,
+                        experience: sanitizedData.nanny.experience || undefined,
+                        agesBaby: sanitizedData.nanny.agesBaby || undefined,
+                        duties: sanitizedData.nanny.duties || undefined,
+                        advantages: sanitizedData.nanny.advantages || undefined,
+                        charts: sanitizedData.nanny.charts || undefined,
+                        occupancy: sanitizedData.nanny.occupancy || undefined,
+                        audioFile: sanitizedData.nanny.audioFile || undefined,
+                        educationFile: sanitizedData.nanny.educationFile || undefined,
+                        isValidated: sanitizedData.nanny.isValidated !== undefined ? sanitizedData.nanny.isValidated : undefined,
+                        isVisible: sanitizedData.nanny.isVisible !== undefined ? sanitizedData.nanny.isVisible : undefined,
+                    },
+                    create: {
+                        about: sanitizedData.nanny.about || '',
+                        education: sanitizedData.nanny.education || '',
+                        jobs: sanitizedData.nanny.jobs || '',
+                        typePay: sanitizedData.nanny.typePay || 'hourly',
+                        pay: sanitizedData.nanny.pay || [],
+                        experience: sanitizedData.nanny.experience || '',
+                        agesBaby: sanitizedData.nanny.agesBaby || [],
+                        duties: sanitizedData.nanny.duties || [],
+                        advantages: sanitizedData.nanny.advantages || [],
+                        charts: sanitizedData.nanny.charts || [],
+                        occupancy: sanitizedData.nanny.occupancy || 'full',
+                        audioFile: sanitizedData.nanny.audioFile || '',
+                        educationFile: sanitizedData.nanny.educationFile || '',
+                        isValidated: sanitizedData.nanny.isValidated !== undefined ? sanitizedData.nanny.isValidated : false,
+                        isVisible: sanitizedData.nanny.isVisible !== undefined ? sanitizedData.nanny.isVisible : false,
+                    }
+                }
+            };
+        }
+
+        console.log('Processed update data:', JSON.stringify(updateData, null, 2));
+
+        const updatedUser = await this.prisma.user.update({
+            where: { id: id },
+            data: updateData,
+            include: { nannyProfile: true },
+        });
+
+        return updatedUser;
+
+    } catch (error) {
+        console.error('Update nanny error details:', error);
+        
+        if (error instanceof Prisma.PrismaClientValidationError) {
+            console.error('Validation error details:', error.message);
+            throw new BadRequestException('Неверная структура данных для обновления: ' + error.message);
+        }
+
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            switch (error.code) {
+                case 'P2002':
+                    const target = error.meta?.target as string[];
+                    if (target?.includes('phone')) {
+                        throw new ConflictException('Этот номер телефона уже используется');
+                    }
+                    throw new ConflictException('Конфликт уникальности данных');
+                case 'P2025':
+                    throw new NotFoundException('Пользователь не найден');
+                default:
+                    throw new BadRequestException(`Ошибка базы данных: ${error.code}`);
+            }
+        }
+
+        throw new InternalServerErrorException('Внутренняя ошибка сервера');
     }
+}
 
     async getUserById(id:string) {
         try {

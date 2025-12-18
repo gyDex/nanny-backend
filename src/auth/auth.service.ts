@@ -130,8 +130,8 @@ export class AuthService {
 
         await this.mailService.sendMail(email, `Авторизация на сайт`, `<h1>Ваш код: ${code}</h1>`)
 
-        return { message: `Код отправлен успешно` };
-        // return { message: `Ваш код: ${code}` };
+        // return { message: `Код отправлен успешно` };
+        return { message: `Ваш код: ${code}` };
     }
 
     async login(user: User, res: Response, redirect:boolean = false) {
